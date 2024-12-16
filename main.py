@@ -1,5 +1,7 @@
 from base import Agent
 from execution_pipeline import main
+from pathlib import Path
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 
 class ClassificationAgent(Agent):
     """
@@ -9,8 +11,31 @@ class ClassificationAgent(Agent):
         """
         Initialize your LLM here
         """
-        # TODO
-        raise NotImplementedError
+        # Save the configuration
+        self.config = config
+
+        # Define the model path
+        self.model_path = Path(self.config.get("model_path", "./saved_models/qwen-7b"))
+
+        # Check if the model is already downloaded
+        if not self.model_path.exists():
+            print(f"Model not found locally. Downloading and saving to {self.model_path}...")
+            self.model_path.mkdir(parents=True, exist_ok=True)
+            model_name = self.config.get("model", "Qwen/Qwen2.5-7B-Instruct")
+            model = AutoModelForSequenceClassification.from_pretrained(model_name)
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model.save_pretrained(self.model_path)
+            tokenizer.save_pretrained(self.model_path)
+        else:
+            print(f"Loading model from local path: {self.model_path}")
+
+        # Initialize the text classification pipeline
+        self.classifier = pipeline(
+            "zero-shot-classification",
+            model=str(self.model_path),
+            tokenizer=str(self.model_path),
+            device=self.config.get("device", 1)  # Use -1 for CPU or specify GPU ID
+        )
 
     def __call__(
         self,
@@ -26,18 +51,18 @@ class ClassificationAgent(Agent):
 
         Returns:
             str: The label (should be a key in label2desc) that the text is classified into.
-
-        For example:
-        label2desc = {
-            "apple": "A fruit that is typically red, green, or yellow.",
-            "banana": "A long curved fruit that grows in clusters and has soft pulpy flesh and yellow skin when ripe.",
-            "cherry": "A small, round stone fruit that is typically bright or dark red.",
-        }
-        text = "The fruit is red and about the size of a tennis ball."
-        label = "apple" (should be a key in label2desc, i.e., ["apple", "banana", "cherry"])
         """
-        # TODO
-        raise NotImplementedError
+        # Extract labels and their descriptions
+        labels = list(label2desc.keys())
+        label_descriptions = list(label2desc.values())
+
+        # Perform zero-shot classification
+        result = self.classifier(text, candidate_labels=label_descriptions)
+
+        # Map the predicted description back to the label
+        predicted_label = labels[label_descriptions.index(result["labels"][0])]
+
+        return predicted_label
 
     def update(self, correctness: bool) -> bool:
         """
@@ -49,45 +74,9 @@ class ClassificationAgent(Agent):
         Returns:
             bool: Whether the prediction is correct.
         """
-        # TODO
-        raise NotImplementedError
+        # No update logic for zero-shot classification; return the correctness as-is
+        return correctness
 
-class SQLGenerationAgent(Agent):
-    """
-    An agent that generates SQL code based on the given table schema and the user query.
-    """
-    def __init__(self, config: dict) -> None:
-        """
-        Initialize your LLM here
-        """
-        # TODO
-        raise NotImplementedError
-
-    def __call__(
-        self,
-        table_schema: str,
-        user_query: str
-    ) -> str:
-        """
-        Generate SQL code based on the given table schema and the user query.
-
-        Args:
-            table_schema (str): The table schema.
-            user_query (str): The user query.
-
-        Returns:
-            str: The SQL code that the LLM generates.
-        """
-        # TODO: Note that your output should be a valid SQL code only.
-        raise NotImplementedError
-
-    def update(self, correctness: bool) -> bool:
-        """
-        Update your LLM agent based on the correctness of its own SQL    code at the current time step.
-        """
-        # TODO
-        raise NotImplementedError
-        
 if __name__ == "__main__":
     from argparse import ArgumentParser
     from execution_pipeline import main
@@ -98,8 +87,6 @@ if __name__ == "__main__":
 
     if args.bench_name.startswith("classification"):
         agent_name = ClassificationAgent
-    elif args.bench_name.startswith("sql_generation"):
-        agent_name = SQLGenerationAgent
     else:
         raise ValueError(f"Invalid benchmark name: {args.bench_name}")
 
@@ -107,7 +94,9 @@ if __name__ == "__main__":
         'bench_name': args.bench_name
     }
     config = {
-        # TODO: specify your configs for the agent here
+        "model": "Qwen/Qwen2.5-7B-Instruct",  # Specify the model name here
+        "model_path": "./saved_models/qwen-7b",  # Local model directory
+        "device": 1  # Use -1 for CPU, or specify GPU ID
     }
     agent = agent_name(config)
     main(agent, bench_cfg)
