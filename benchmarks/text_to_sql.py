@@ -16,6 +16,14 @@ def create_bird():
             super().__init__(db_path=db_path, **kwargs)
     return StreamingBird
 
+def create_bird_private():
+    class StreamingBird(GeneralText2SQL):
+        DATASET_PATH = 'appier-ai-research/StreamBench_private_final'
+        DATASET_NAME = 'bird'
+        def __init__(self, db_path='data/bird_private/train_databases', **kwargs):
+            super().__init__(db_path=db_path, **kwargs)
+    return StreamingBird
+
 class GeneralText2SQL(Bench):
     """A task represents an entire benchmark including its dataset, problems,
     answers, generation settings and evaluation methods.

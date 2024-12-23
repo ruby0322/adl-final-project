@@ -180,3 +180,68 @@ def create_ddxplus():
             super().__init__(**kwargs)
 
     return DDXPlusBench
+
+def create_ddxplus_private():
+    class DDXPlusBench(MedicalDiagnosisBench):
+        DATASET_PATH = "appier-ai-research/StreamBench_private_final"
+        DATASET_NAME = "ddxplus"
+        
+        LABEL2TEXT = {
+            0: 'Acute COPD exacerbation / infection',
+            1: 'Acute dystonic reactions',
+            2: 'Acute laryngitis',
+            3: 'Acute otitis media',
+            4: 'Acute pulmonary edema',
+            5: 'Acute rhinosinusitis',
+            6: 'Allergic sinusitis',
+            7: 'Anaphylaxis',
+            8: 'Anemia',
+            9: 'Atrial fibrillation',
+            10: 'Boerhaave',
+            11: 'Bronchiectasis',
+            12: 'Bronchiolitis',
+            13: 'Bronchitis',
+            14: 'Bronchospasm / acute asthma exacerbation',
+            15: 'Chagas',
+            16: 'Chronic rhinosinusitis',
+            17: 'Cluster headache',
+            18: 'Croup',
+            19: 'Ebola',
+            20: 'Epiglottitis',
+            21: 'GERD',
+            22: 'Guillain-Barré syndrome',
+            23: 'HIV (initial infection)',
+            24: 'Influenza',
+            25: 'Inguinal hernia',
+            26: 'Larygospasm',
+            27: 'Localized edema',
+            28: 'Myasthenia gravis',
+            29: 'Myocarditis',
+            30: 'PSVT',
+            31: 'Pancreatic neoplasm',
+            32: 'Panic attack',
+            33: 'Pericarditis',
+            34: 'Pneumonia',
+            35: 'Possible NSTEMI / STEMI',
+            36: 'Pulmonary embolism',
+            37: 'Pulmonary neoplasm',
+            38: 'SLE',
+            39: 'Sarcoidosis',
+            40: 'Scombroid food poisoning',
+            41: 'Spontaneous pneumothorax',
+            42: 'Spontaneous rib fracture',
+            43: 'Stable angina',
+            44: 'Tuberculosis',
+            45: 'URTI',
+            46: 'Unstable angina',
+            47: 'Viral pharyngitis',
+            48: 'Whooping cough'
+        }
+        NOTINLABEL = len(LABEL2TEXT)
+        TEXT2LABEL = {v.lower(): k for k, v in LABEL2TEXT.items()}
+        LABEL_SET = {v.lower() for v in LABEL2TEXT.values()}
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+    return DDXPlusBench
